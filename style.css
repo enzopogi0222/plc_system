@@ -395,7 +395,7 @@ body {
 .canvas-device-content {
     flex: 1 1 0;
     min-height: 0;
-    overflow: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -525,9 +525,11 @@ body {
 
 .canvas-device .rooms-container {
     position: relative;
-    flex: 1 1 auto;
+    flex: 1 1 0;
+    min-height: 120px;
+    min-width: 0;
     padding: 18px 20px;
-    min-height: 220px;
+    overflow: auto;
     width: 100%;
     box-sizing: border-box;
 }

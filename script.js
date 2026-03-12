@@ -296,9 +296,9 @@
                     chip.querySelector('.btn-remove-appliance').addEventListener('click', e => {
                         e.stopPropagation();
                         chip.remove();
-                            renderDeviceRoomTable(deviceEl);
-                            updateRoomPanelIfSelected(roomEl);
-                            scheduleUpdateConnectingLines();
+                        renderDeviceRoomTable(deviceEl);
+                        updateRoomPanelIfSelected(roomEl);
+                        scheduleUpdateConnectingLines();
                     });
                     chip.addEventListener('click', e => {
                         if (e.target.classList.contains('btn-remove-appliance')) return;
