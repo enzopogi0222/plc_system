@@ -296,19 +296,19 @@ body {
 }
 
 .toolbar-icon .icon-room {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'%3E%3Cpath d='M4 10l8-6 8 6v8a2 2 0 01-2 2H6a2 2 0 01-2-2z'/%3E%3Crect x='9' y='13' width='6' height='5' rx='1'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3L4 9v12h6v-6h4v6h6V9l-8-6z'/%3E%3Crect x='10' y='13' width='4' height='5' rx='0.5'/%3E%3C/svg%3E");
 }
 
 .toolbar-icon .icon-aircon {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'%3E%3Crect x='3' y='5' width='18' height='10' rx='2'/%3E%3Cpath d='M7 9h3M14 9h3M5 15h14'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='5' width='20' height='11' rx='2'/%3E%3Cpath d='M6 9h2M16 9h2M4 14h16'/%3E%3Cpath d='M8 11v2M16 11v2'/%3E%3C/svg%3E");
 }
 
 .toolbar-icon .icon-fan {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3Cpath d='M12 4l2 4-2 1-2-1zM18 10l-1 3-2-.5-.5-2.5zM6 10l3 .5-.5 2.5-2 .5zM10 18l2-1 2 1-2 3z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3Cpath d='M12 4v3M12 17v3M4 12h3M17 12h3'/%3E%3Cpath d='M7.2 7.2l2.1 2.1M14.7 14.7l2.1 2.1M7.2 16.8l2.1-2.1M14.7 9.3l2.1-2.1'/%3E%3Cpath d='M12 7l1.2 2.5-1.2.8-1.2-.8L12 7zM12 17l-1.2-2.5 1.2-.8 1.2.8L12 17zM7 12l2.5-1.2.8 1.2-.8 1.2L7 12zM17 12l-2.5 1.2-.8-1.2.8-1.2L17 12z'/%3E%3C/svg%3E");
 }
 
 .toolbar-icon .icon-light {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'%3E%3Cpath d='M9 21h6M10 17h4M12 3a5 5 0 015 5c0 1.7-.6 3.1-1.7 4.2L15 14H9l-.3-1.8A5.1 5.1 0 017 8a5 5 0 015-5z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 15h4'/%3E%3Cpath d='M12 3c-2.5 0-4.5 2-4.5 4.5 0 1.2.5 2.3 1.2 3.1L9.5 14h5l-1.2-3.4c.7-.8 1.2-1.9 1.2-3.1C14.5 5 12.5 3 12 3z'/%3E%3Cpath d='M11 20h2'/%3E%3Cpath d='M12 20v1'/%3E%3C/svg%3E");
 }
 
 .toolbar-icon span:last-child {
@@ -328,6 +328,7 @@ body {
     margin-bottom: 16px;
 }
 
+/* Lines drawn on top of canvas; pointer-events: none so clicks hit canvas; device cards sit above lines */
 .canvas-lines {
     position: absolute;
     left: 0;
@@ -335,7 +336,11 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 10;
+    z-index: 2;
+}
+.canvas-wrapper .canvas {
+    position: relative;
+    z-index: 1;
 }
 
 /* Connecting lines: smooth color when appliance toggles ON/OFF */
@@ -350,11 +355,6 @@ body {
 }
 .canvas-lines .connector-dot {
     transition: fill 0.35s ease;
-}
-
-.canvas-wrapper .canvas {
-    position: relative;
-    z-index: 1;
 }
 
 .canvas {
@@ -373,9 +373,10 @@ body {
     padding: 24px;
 }
 
-/* Deployed device card on canvas: white, purple outline (user-resizable width & height) */
+/* Deployed device card on canvas: white, purple outline (user-resizable width & height); z-index so cards sit above connector lines */
 .canvas-device {
     position: relative;
+    z-index: 3;
     display: flex;
     flex-direction: column;
     background: var(--bg-card);
@@ -683,7 +684,7 @@ body {
 }
 
 .appliance-chip .icon-appliance-aircon {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Crect x='3' y='5' width='18' height='10' rx='2'/%3E%3Cpath d='M7 9h3M14 9h3M5 15h14'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='5' width='20' height='11' rx='2'/%3E%3Cpath d='M6 9h2M16 9h2M4 14h16'/%3E%3Cpath d='M8 11v2M16 11v2'/%3E%3C/svg%3E");
 }
 
 /* Fan icon spins when appliance is ON */
@@ -697,11 +698,11 @@ body {
 }
 
 .appliance-chip .icon-appliance-fan {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3Cpath d='M12 4l2 4-2 1-2-1zM18 10l-1 3-2-.5-.5-2.5zM6 10l3 .5-.5 2.5-2 .5zM10 18l2-1 2 1-2 3z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3Cpath d='M12 4v3M12 17v3M4 12h3M17 12h3'/%3E%3Cpath d='M7.2 7.2l2.1 2.1M14.7 14.7l2.1 2.1M7.2 16.8l2.1-2.1M14.7 9.3l2.1-2.1'/%3E%3Cpath d='M12 7l1.2 2.5-1.2.8-1.2-.8L12 7zM12 17l-1.2-2.5 1.2-.8 1.2.8L12 17zM7 12l2.5-1.2.8 1.2-.8 1.2L7 12zM17 12l-2.5 1.2-.8-1.2.8-1.2L17 12z'/%3E%3C/svg%3E");
 }
 
 .appliance-chip .icon-appliance-light {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M9 21h6M10 17h4M12 3a5 5 0 015 5c0 1.7-.6 3.1-1.7 4.2L15 14H9l-.3-1.8A5.1 5.1 0 017 8a5 5 0 015-5z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 15h4'/%3E%3Cpath d='M12 3c-2.5 0-4.5 2-4.5 4.5 0 1.2.5 2.3 1.2 3.1L9.5 14h5l-1.2-3.4c.7-.8 1.2-1.9 1.2-3.1C14.5 5 12.5 3 12 3z'/%3E%3Cpath d='M11 20h2'/%3E%3Cpath d='M12 20v1'/%3E%3C/svg%3E");
 }
 
 /* Light icon pulses (glow) when appliance is ON */
@@ -730,7 +731,7 @@ body {
     height: 20px;
     padding: 0;
     border: none;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E") center/contain no-repeat;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E") center/contain no-repeat;
     cursor: pointer;
     opacity: 0.7;
 }
@@ -941,4 +942,59 @@ body {
     font-size: 10px;
     color: var(--text-muted);
     margin-left: 6px;
+}
+
+.appliance-status-alert {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 1200;
+    max-width: 320px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: var(--shadow-card);
+}
+
+.appliance-status-alert.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.appliance-status-alert.is-on {
+    background: var(--success);
+}
+
+.appliance-status-alert.is-off {
+    background: #6b7280;
+}
+
+.capacity-limit-alert {
+    position: fixed;
+    right: 18px;
+    bottom: 62px;
+    z-index: 1200;
+    max-width: 360px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: var(--shadow-card);
+    background: var(--danger);
+}
+
+.capacity-limit-alert.is-visible {
+    opacity: 1;
+    transform: translateY(0);
 }

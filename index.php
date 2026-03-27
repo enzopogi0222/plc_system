@@ -59,11 +59,11 @@ initDatabase();
                 </div>
             </div>
 
-            <!-- Deployment Canvas (SVG layer draws connecting lines behind content) -->
+            <!-- Deployment Canvas: SVG lines layer (z-index 1) then canvas (z-index 2, transparent) so lines show through -->
             <div class="canvas-wrapper" id="canvas-wrapper">
                 <svg id="canvas-lines" class="canvas-lines" aria-hidden="true"></svg>
                 <div class="canvas" id="deployment-canvas">
-                    <p class="canvas-hint" id="canvas-hint">Drag PLC devices from the left panel here. Then drag Room / Appliances from the toolbar onto devices / rooms.</p>
+                <p class="canvas-hint" id="canvas-hint">Drag PLC devices from the left panel here. Then drag Room / Appliances from the toolbar onto devices / rooms.</p>
                 </div>
             </div>
         </main>

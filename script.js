@@ -54,6 +54,45 @@
         roomDetailsContent: document.getElementById('room-details-content'),
         btnCloseRoomDetails: document.getElementById('btn-close-room-details'),
     };
+    let alertToastTimer = null;
+
+    function showApplianceStatusAlert(message, status) {
+        let toast = document.getElementById('appliance-status-alert');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'appliance-status-alert';
+            toast.className = 'appliance-status-alert';
+            document.body.appendChild(toast);
+        }
+        toast.classList.remove('is-on', 'is-off', 'is-visible');
+        toast.textContent = message;
+        toast.classList.add(status === 'ON' ? 'is-on' : 'is-off', 'is-visible');
+
+        if (alertToastTimer) {
+            clearTimeout(alertToastTimer);
+        }
+        alertToastTimer = setTimeout(() => {
+            toast.classList.remove('is-visible');
+        }, 1800);
+    }
+
+    let capacityToastTimer = null;
+    function showCapacityLimitAlert(message) {
+        let toast = document.getElementById('capacity-limit-alert');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'capacity-limit-alert';
+            toast.className = 'capacity-limit-alert';
+            document.body.appendChild(toast);
+        }
+        toast.classList.remove('is-visible');
+        toast.textContent = message;
+        toast.classList.add('is-visible');
+        if (capacityToastTimer) clearTimeout(capacityToastTimer);
+        capacityToastTimer = setTimeout(() => {
+            toast.classList.remove('is-visible');
+        }, 2000);
+    }
 
     // --- Switch capacity rules: max rooms <= switch, total appliances <= switch ---
     function getDeviceCapacity(deviceId) {
@@ -239,7 +278,7 @@
             const roomList = Object.values(info.rooms).sort((a, b) => (a.room_id - b.room_id));
             roomList.forEach((roomInfo, idx) => {
                 const roomIndex = idx + 1;
-                const roomLabel = 'ROOMNO. ' + roomIndex;
+                const roomLabel = (roomInfo.roomnoname && String(roomInfo.roomnoname).trim()) ? String(roomInfo.roomnoname).trim() : ('ROOMNO. ' + roomIndex);
                 const roomEl = document.createElement('div');
                 roomEl.className = 'canvas-room';
                 roomEl.setAttribute('data-room-id', roomInfo.room_id);
@@ -247,7 +286,7 @@
                 roomEl.setAttribute('data-room-bldg', roomInfo.bldgno || '');
                 roomEl.innerHTML = `
                     <div class="room-header">
-                        <span class="room-title">${roomLabel}</span>
+                        <span class="room-title">${escapeHtml(roomLabel)}</span>
                         <button type="button" class="btn-remove-room" title="Remove room" aria-label="Remove room">×</button>
                     </div>
                     <div class="drop-hint">Drop appliances here</div>
@@ -278,7 +317,7 @@
                 const savedAppPositions = layoutForDevice && layoutForDevice.appliances && layoutForDevice.appliances[idx];
                 roomInfo.appliances.forEach((dep, aIdx) => {
                     const chip = document.createElement('div');
-                    chip.className = 'appliance-chip' + (dep.status === 'ON' ? ' status-on' : '');
+                    chip.className = 'appliance-chip' + (String(dep.status || '').toUpperCase() === 'ON' ? ' status-on' : '');
                     chip.setAttribute('data-appliance-id', dep.appliance_id);
                     chip.setAttribute('data-appliance-name', dep.appliance_name);
                     chip.setAttribute('data-appliance-type', (dep.appliance_name || '').toLowerCase().includes('fan') ? 'fan' :
@@ -297,6 +336,7 @@
                         e.stopPropagation();
                         chip.remove();
                         renderDeviceRoomTable(deviceEl);
+                        initDeviceChart(deviceEl);
                         updateRoomPanelIfSelected(roomEl);
                         scheduleUpdateConnectingLines();
                     });
@@ -316,6 +356,7 @@
                 });
             });
             renderDeviceRoomTable(deviceEl);
+            initDeviceChart(deviceEl);
         });
         scheduleUpdateConnectingLines();
     }
@@ -458,6 +499,10 @@
             });
         }
         initDeviceCardResize(wrap);
+        const roomsContainer = wrap.querySelector('.rooms-container');
+        if (roomsContainer) {
+            roomsContainer.addEventListener('scroll', scheduleUpdateConnectingLines);
+        }
         wrap.querySelector('.btn-details-device').addEventListener('click', e => {
             e.stopPropagation();
             showDeviceDetails(wrap);
@@ -485,7 +530,7 @@
         wrap.addEventListener('drop', onDeviceDrop);
         DOM.canvas.appendChild(wrap);
         renderDeviceRoomTable(wrap);
-        initDeviceChart(wrap.querySelector('.device-chart-container canvas'));
+        initDeviceChart(wrap);
         return wrap;
     }
 
@@ -493,14 +538,22 @@
         const handle = deviceEl.querySelector('.canvas-device-resize-handle');
         if (!handle) return;
         const minW = 400;
-        const maxW = 1600;
+        const hardMaxW = 1600;
         const minH = 280;
         const maxH = 900;
         let startX = 0, startY = 0, startW = 0, startH = 0;
         function onMove(e) {
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
-            const w = Math.max(minW, Math.min(maxW, startW + dx));
+            // Clamp width so the device cannot grow beyond the visible canvas area,
+            // which prevents it from visually overlapping the sidebars.
+            let dynamicMaxW = hardMaxW;
+            if (DOM.canvasWrapper) {
+                const wrapperRect = DOM.canvasWrapper.getBoundingClientRect();
+                // Leave a small margin for canvas padding / gaps.
+                dynamicMaxW = Math.min(hardMaxW, Math.max(minW, wrapperRect.width - 48));
+            }
+            const w = Math.max(minW, Math.min(dynamicMaxW, startW + dx));
             const h = Math.max(minH, Math.min(maxH, startH + dy));
             deviceEl.style.setProperty('width', w + 'px');
             deviceEl.style.setProperty('flex', '0 0 ' + w + 'px');
@@ -573,7 +626,7 @@
                 if (!roomsContainer) return;
                 roomList.forEach((roomInfo, idx) => {
                     const roomIndex = idx + 1;
-                    const roomLabel = 'ROOMNO. ' + roomIndex;
+                    const roomLabel = (roomInfo.roomnoname && String(roomInfo.roomnoname).trim()) ? String(roomInfo.roomnoname).trim() : ('ROOMNO. ' + roomIndex);
                     const roomEl = document.createElement('div');
                     roomEl.className = 'canvas-room';
                     roomEl.setAttribute('data-room-id', roomInfo.room_id);
@@ -581,7 +634,7 @@
                     roomEl.setAttribute('data-room-bldg', roomInfo.bldgno || '');
                     roomEl.innerHTML = `
                         <div class="room-header">
-                            <span class="room-title">${roomLabel}</span>
+                            <span class="room-title">${escapeHtml(roomLabel)}</span>
                             <button type="button" class="btn-remove-room" title="Remove room" aria-label="Remove room">×</button>
                         </div>
                         <div class="drop-hint">Drop appliances here</div>
@@ -611,7 +664,7 @@
                     const savedAppPositions = layoutForDevice && layoutForDevice.appliances && layoutForDevice.appliances[idx];
                     roomInfo.appliances.forEach((dep, aIdx) => {
                         const chip = document.createElement('div');
-                        chip.className = 'appliance-chip' + (dep.status === 'ON' ? ' status-on' : '');
+                        chip.className = 'appliance-chip' + (String(dep.status || '').toUpperCase() === 'ON' ? ' status-on' : '');
                         chip.setAttribute('data-appliance-id', dep.appliance_id);
                         chip.setAttribute('data-appliance-name', dep.appliance_name);
                         chip.setAttribute('data-appliance-type', (dep.appliance_name || '').toLowerCase().includes('fan') ? 'fan' :
@@ -767,8 +820,10 @@
         if (!DOM.canvasWrapper || !el) return null;
         const wr = DOM.canvasWrapper.getBoundingClientRect();
         const er = el.getBoundingClientRect();
-        let x = er.left - wr.left + er.width / 2;
-        let y = er.top - wr.top;
+        const borderX = (DOM.canvasWrapper.clientLeft || 0);
+        const borderY = (DOM.canvasWrapper.clientTop || 0);
+        let x = er.left - wr.left - borderX + er.width / 2;
+        let y = er.top - wr.top - borderY;
         if (placement === 'bottom-center') y += er.height;
         else if (placement === 'top-center') { /* x already center, y is top */ }
         return { x, y };
@@ -788,19 +843,47 @@
             svg.innerHTML = '';
             return;
         }
-        const w = wrapper.offsetWidth;
-        const h = wrapper.offsetHeight;
+        const w = Math.max(1, wrapper.offsetWidth || 0);
+        const h = Math.max(1, wrapper.offsetHeight || 0);
         svg.setAttribute('width', w);
         svg.setAttribute('height', h);
         svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
+        const wrRect = wrapper.getBoundingClientRect();
+        const borderX = wrapper.clientLeft || 0;
+        const borderY = wrapper.clientTop || 0;
+
         const segments = [];
         devices.forEach(deviceEl => {
+            const devRect = deviceEl.getBoundingClientRect();
+            const devLeft = devRect.left - wrRect.left - borderX;
+            const devRight = devRect.right - wrRect.left - borderX;
+            const devTop = devRect.top - wrRect.top - borderY;
+            const devBottom = devRect.bottom - wrRect.top - borderY;
+
+            // If the device card is small (user has minimized it), do not draw any connectors for it.
+            // This makes the lines effectively disappear when the device is collapsed.
+            if (devRect.height < 420 || devRect.width < 520) {
+                return;
+            }
             deviceEl.querySelectorAll('.canvas-room').forEach(roomEl => {
                 const fromRoom = getRoomToApplianceStart(roomEl);
                 roomEl.querySelectorAll('.appliance-chip').forEach(chip => {
                     const toApp = getConnectorPoint(chip, 'top-center');
                     if (!fromRoom || !toApp) return;
+                    // Only draw connectors if both endpoints are inside the *device card* bounds.
+                    // This avoids lines appearing outside when content is scrolled or the device is resized smaller.
+                    const fromInsideDevice =
+                        fromRoom.x >= devLeft &&
+                        fromRoom.x <= devRight &&
+                        fromRoom.y >= devTop &&
+                        fromRoom.y <= devBottom;
+                    const toInsideDevice =
+                        toApp.x >= devLeft &&
+                        toApp.x <= devRight &&
+                        toApp.y >= devTop &&
+                        toApp.y <= devBottom;
+                    if (!fromInsideDevice || !toInsideDevice) return;
                     const midX = (fromRoom.x + toApp.x) / 2;
                     const ctrlY = fromRoom.y + (toApp.y - fromRoom.y) * 0.5;
                     const d = `M ${fromRoom.x} ${fromRoom.y} Q ${midX} ${ctrlY} ${toApp.x} ${toApp.y}`;
@@ -850,15 +933,58 @@
         DOM.roomDetailsModal.setAttribute('aria-hidden', 'false');
     }
 
-    function initDeviceChart(canvasEl) {
-        if (!canvasEl || typeof Chart === 'undefined') return;
-        new Chart(canvasEl.getContext('2d'), {
+    function getDeviceTotalPower(deviceEl) {
+        if (!deviceEl) return 0;
+        let total = 0;
+        // Sum power of ON appliances in this device.
+        deviceEl.querySelectorAll('.appliance-chip').forEach(chip => {
+            if (!chip.classList.contains('status-on')) return;
+            const raw = chip.getAttribute('data-power');
+            const val = raw != null && raw !== '' ? parseFloat(raw) : 0;
+            if (!Number.isNaN(val)) total += val;
+        });
+        // Fallback: if no ON appliances, use the device's configured power, if any.
+        if (total === 0) {
+            const rawDev = deviceEl.getAttribute('data-device-power');
+            const devVal = rawDev != null && rawDev !== '' ? parseFloat(rawDev) : 0;
+            if (!Number.isNaN(devVal)) total = devVal;
+        }
+        return total;
+    }
+
+    const MTUT_LABELS = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+
+    function applyMTUTData(deviceEl, labels, values) {
+        const chart = deviceEl._mtutChart;
+        if (!chart) return;
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = values;
+        chart.update();
+    }
+
+    function initDeviceChart(deviceEl) {
+        if (!deviceEl || typeof Chart === 'undefined') return;
+        const canvasEl = deviceEl.querySelector('.device-chart-container canvas');
+        if (!canvasEl) return;
+
+        const deviceId = deviceEl.getAttribute('data-device-id');
+        const fallbackLabels = MTUT_LABELS.slice();
+        const fallbackPower = getDeviceTotalPower(deviceEl);
+        const fallbackValues = fallbackLabels.map(() => fallbackPower);
+
+        const existing = deviceEl._mtutChart;
+        if (existing) {
+            applyMTUTData(deviceEl, fallbackLabels, fallbackValues);
+            return;
+        }
+
+        const chart = new Chart(canvasEl.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                labels: fallbackLabels,
                 datasets: [{
-                    label: 'Power',
-                    data: [120, 90, 150, 200, 180, 220],
+                    label: 'Power (W)',
+                    data: fallbackValues,
                     backgroundColor: 'rgba(109, 40, 217, 0.7)',
                     borderColor: '#6d28d9',
                     borderWidth: 1,
@@ -868,12 +994,31 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, display: true },
-                    x: { display: true },
+                    x: {
+                        display: true,
+                        title: { display: true, text: 'Time (24h)' },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        display: true,
+                        title: { display: true, text: 'Power (W)' },
+                    },
                 },
                 plugins: { legend: { display: false } },
             },
         });
+        deviceEl._mtutChart = chart;
+
+        if (deviceId) {
+            fetch('get_device_power.php?device_id=' + encodeURIComponent(deviceId))
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success && Array.isArray(data.labels) && Array.isArray(data.values)) {
+                        applyMTUTData(deviceEl, data.labels, data.values);
+                    }
+                })
+                .catch(function () {});
+        }
     }
 
     // Allow dropping a deployed device back into the sidebar list to remove it from canvas
@@ -929,7 +1074,11 @@
         e.currentTarget.classList.remove('drag-over');
         const type = e.dataTransfer.getData('application/plc-toolbar');
         if (type !== 'room') return;
-        if (!canAddRoom(e.currentTarget)) return;
+        if (!canAddRoom(e.currentTarget)) {
+            const cap = parseInt(e.currentTarget.getAttribute('data-device-switch') || '1', 10);
+            showCapacityLimitAlert('Switch capacity reached: max ' + cap + ' room(s) per device.');
+            return;
+        }
         openAddRoomForm(e.currentTarget);
     }
 
@@ -1017,7 +1166,12 @@
         e.currentTarget.classList.remove('drag-over');
         const type = e.dataTransfer.getData('application/plc-toolbar');
         if (type !== 'aircon' && type !== 'fan' && type !== 'light') return;
-        if (!canAddAppliance(e.currentTarget)) return;
+        if (!canAddAppliance(e.currentTarget)) {
+            const deviceEl = e.currentTarget.closest('.canvas-device');
+            const cap = deviceEl ? parseInt(deviceEl.getAttribute('data-device-switch') || '1', 10) : 1;
+            showCapacityLimitAlert('Switch capacity reached: max ' + cap + ' appliance(s) per device.');
+            return;
+        }
         openAddApplianceForm(e.currentTarget, type);
     }
 
@@ -1155,7 +1309,10 @@
         chip.querySelector('.btn-remove-appliance').addEventListener('click', e => {
             e.stopPropagation();
             chip.remove();
-            if (deviceEl) renderDeviceRoomTable(deviceEl);
+            if (deviceEl) {
+                renderDeviceRoomTable(deviceEl);
+                initDeviceChart(deviceEl);
+            }
             updateRoomPanelIfSelected(roomEl);
             scheduleUpdateConnectingLines();
         });
@@ -1169,17 +1326,28 @@
         chip.style.top = aPos.top + 'px';
         container.appendChild(chip);
         makeApplianceChipDraggable(chip);
-        if (deviceEl) renderDeviceRoomTable(deviceEl);
+        if (deviceEl) {
+            renderDeviceRoomTable(deviceEl);
+            initDeviceChart(deviceEl);
+        }
         updateRoomPanelIfSelected(roomEl);
         scheduleUpdateConnectingLines();
     }
 
     function toggleAppliance(chip) {
         const wasOn = chip.classList.contains('status-on');
+        const deviceEl = chip.closest('.canvas-device');
+        const roomEl = chip.closest('.canvas-room');
+        const roomName = roomEl ? (roomEl.getAttribute('data-room-name') || 'Room') : 'Room';
+        const name = chip.getAttribute('data-appliance-name') || 'Appliance';
+        const applianceId = chip.getAttribute('data-appliance-id') || '-';
+        const deviceIp = deviceEl ? (deviceEl.getAttribute('data-device-ip') || '-') : '-';
+        let nextStatus = 'OFF';
         if (wasOn) {
             chip.classList.add('animate-off');
             chip.classList.remove('status-on');
             chip.setAttribute('data-status', 'OFF');
+            nextStatus = 'OFF';
             const onAnimationEnd = () => {
                 chip.classList.remove('animate-off');
                 chip.removeEventListener('animationend', onAnimationEnd);
@@ -1189,7 +1357,19 @@
             chip.classList.remove('animate-off');
             chip.classList.add('status-on');
             chip.setAttribute('data-status', 'ON');
+            nextStatus = 'ON';
         }
+        showApplianceStatusAlert(
+            'ID: ' + applianceId + ' | ' + name + ' | Room: ' + roomName + ' | IP: ' + deviceIp + ' | Status: ' + nextStatus,
+            nextStatus
+        );
+        if (deviceEl) {
+            initDeviceChart(deviceEl);
+        }
+        if (roomEl) {
+            updateRoomPanelIfSelected(roomEl);
+        }
+        scheduleUpdateConnectingLines();
     }
 
     function selectRoom(roomEl) {
@@ -1284,10 +1464,7 @@
                     res.roomIds.forEach((id, i) => {
                         if (roomEls[i]) {
                             roomEls[i].setAttribute('data-room-id', id);
-                            const label = 'ROOMNO. ' + (i + 1);
-                            roomEls[i].setAttribute('data-room-name', label);
-                            const header = roomEls[i].querySelector('.room-header');
-                            if (header) header.textContent = label;
+                            /* Keep existing data-room-name and room title (roomnoname) - do not overwrite with ROOMNO. 1 */
                         }
                     });
                 }
@@ -1348,6 +1525,11 @@
                     } catch (e) { /* ignore */ }
                     btn.remove();
                     DOM.btnSave = null;
+                    const loadBtn = DOM.btnLoad;
+                    if (loadBtn) {
+                        loadBtn.remove();
+                        DOM.btnLoad = null;
+                    }
                 }
             }
             if (hasError) {
@@ -1443,6 +1625,8 @@
             });
         }
         window.addEventListener('resize', scheduleUpdateConnectingLines);
+        window.addEventListener('scroll', scheduleUpdateConnectingLines, true);
+        if (DOM.canvasWrapper) DOM.canvasWrapper.addEventListener('scroll', scheduleUpdateConnectingLines);
     }
 
     function handleAddRoomSubmit(e) {
