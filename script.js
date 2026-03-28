@@ -1264,6 +1264,50 @@
 
     const applianceLabels = { aircon: 'Aircon', fan: 'Fan', light: 'Light' };
 
+    function getNextNumericApplianceId(deviceEl) {
+        if (!deviceEl) return Date.now();
+        let maxId = 0;
+        deviceEl.querySelectorAll('.appliance-chip').forEach(chip => {
+            const raw = chip.getAttribute('data-appliance-id') || '';
+            const n = parseInt(raw, 10);
+            if (!Number.isNaN(n)) maxId = Math.max(maxId, n);
+        });
+        return maxId + 1;
+    }
+
+    /** 1-based switch channel for PLC (matches switchappx.php s1: '1', '2', …). Order = DOM order on device. */
+    function getApplianceSwitchNumber(chip) {
+        const deviceEl = chip && chip.closest('.canvas-device');
+        if (!deviceEl) return '1';
+        const chips = deviceEl.querySelectorAll('.appliance-chip');
+        for (let i = 0; i < chips.length; i++) {
+            if (chips[i] === chip) return String(i + 1);
+        }
+        return '1';
+    }
+
+    /** 1-based switch channel for PLC (matches switchappx.php s1: '1', '2', …). Order = DOM order on device. */
+    function getApplianceSwitchNumber(chip) {
+        const deviceEl = chip && chip.closest('.canvas-device');
+        if (!deviceEl) return '1';
+        const chips = deviceEl.querySelectorAll('.appliance-chip');
+        for (let i = 0; i < chips.length; i++) {
+            if (chips[i] === chip) return String(i + 1);
+        }
+        return '1';
+    }
+
+    /** 1-based switch channel for PLC (matches switchappx.php s1: '1', '2', …). Order = DOM order on device. */
+    function getApplianceSwitchNumber(chip) {
+        const deviceEl = chip && chip.closest('.canvas-device');
+        if (!deviceEl) return '1';
+        const chips = deviceEl.querySelectorAll('.appliance-chip');
+        for (let i = 0; i < chips.length; i++) {
+            if (chips[i] === chip) return String(i + 1);
+        }
+        return '1';
+    }
+
     function openAddApplianceForm(roomEl, type) {
         state.pendingAppliance = { roomEl: roomEl, type: type };
         if (DOM.addApplianceForm) {
@@ -1288,14 +1332,14 @@
     function addApplianceToRoom(roomEl, type, opts) {
         const container = roomEl.querySelector('.appliances-container');
         const deviceEl = roomEl.closest('.canvas-device');
-        const id = roomEl.getAttribute('data-room-id') + '-' + type + '-' + Date.now();
+        const id = getNextNumericApplianceId(deviceEl);
         const name = (opts && opts.appliance_name && String(opts.appliance_name).trim()) ? String(opts.appliance_name).trim() : (applianceLabels[type] || type);
         const power = (opts && opts.power != null) ? String(opts.power) : '0';
         const hp = (opts && opts.hp != null) ? String(opts.hp) : '0';
         const current = (opts && opts.current != null) ? String(opts.current) : '0';
         const chip = document.createElement('div');
         chip.className = 'appliance-chip';
-        chip.setAttribute('data-appliance-id', id);
+        chip.setAttribute('data-appliance-id', String(id));
         chip.setAttribute('data-appliance-name', name);
         chip.setAttribute('data-appliance-type', type);
         chip.setAttribute('data-power', power);
@@ -1370,6 +1414,7 @@
             updateRoomPanelIfSelected(roomEl);
         }
         scheduleUpdateConnectingLines();
+        fetchData(deviceIp, getApplianceSwitchNumber(chip), nextStatus);
     }
 
     function selectRoom(roomEl) {

@@ -17,6 +17,20 @@ initDatabase();
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <script>
+        async function fetchData(ipaddress,s1x,s2x) {
+  try {
+    z1x='?s1='+s1x+'&s2='+s2x+'&ip='+ipaddress;
+url = 'switchappx.php'+z1x;
+  const response = await fetch(url);
+   if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`);    }
+    const data = await response.text(); 
+    console.log(data);
+//your code here to append DOM
+  } catch (error) { console.error('Fetch error:', error.message);  }
+  //alert(ipaddress+" "+s1x+" "+s2x);
+}
+    </script>
     <header class="app-header">
         <h1>PLC Device Deployment System</h1>
     </header>
